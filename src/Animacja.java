@@ -1,13 +1,12 @@
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 import javax.swing.*;
 
-public class Animacja extends JFrame
-{
+public class Animacja extends JFrame{
     public Animacja(){
         this.setTitle("Animacja kropelki");
         this.setBounds(250, 300, 300, 250);
@@ -15,8 +14,16 @@ public class Animacja extends JFrame
         JButton bStart = (JButton)panelButtonow.add(new JButton("Start"));
         
         bStart.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
+            public void actionPerformed(ActionEvent e)  {
                 startAnimation();
+            }
+        });
+        
+        JButton bUsun = (JButton)panelButtonow.add(new JButton("Usuń"));
+        
+        bUsun.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                stopAnimation();
             }
         });
         
@@ -27,21 +34,29 @@ public class Animacja extends JFrame
     public void startAnimation(){
         panelAnimacji.addKropelka();
     }
+    public void stopAnimation(){
+        panelAnimacji.stop();
+    }
     private JPanel panelButtonow = new JPanel();
     private PanelAnimacji panelAnimacji = new PanelAnimacji();
     public static void main(String[] args) {
         new Animacja().setVisible(true);
     }
     
-    class PanelAnimacji extends JPanel{
-        public void addKropelka() {
-        	listaKropelek.add(new Kropelka());
-            Thread watek = new Thread(new KropelkaRunnable());        
+    class PanelAnimacji extends JPanel {
+        public void addKropelka(){
+            listaKropelek.add(new Kropelka());
+            watek = new Thread(grupaWatkow, new KropelkaRunnable((Kropelka)listaKropelek.get(listaKropelek.size()-1)));
             watek.start();
             
-
+            
+            grupaWatkow.list();
+            
+            
         }
-        
+        public void stop()  {
+            grupaWatkow.interrupt();
+        }        
         @Override
         public void paintComponent(Graphics g){
             super.paintComponent(g);
@@ -52,26 +67,29 @@ public class Animacja extends JFrame
         }
         ArrayList listaKropelek = new ArrayList();
         JPanel ten = this;
+        Thread watek;
+        ThreadGroup grupaWatkow = new ThreadGroup("Grupa Kropelek");
         public class KropelkaRunnable implements Runnable{
-			@Override
-			public void run() {
-	           
-	            for (int i = 0; i < 2500; i++){
-	                for(int j = 0; j < listaKropelek.size(); j++){
-	                    ((Kropelka)listaKropelek.get(j)).ruszKropelka(ten);
-	                  	repaint();
-	                    try {
-	                        Thread.sleep(1);
-	                    } 
-	                    catch (InterruptedException ex) {
-	                        System.out.println(ex.getMessage());
-	                    }
-	                }
-	                
-	            }
-				
-			}
-        	
+            public KropelkaRunnable(Kropelka kropelka) {
+               this.kropelka = kropelka;   
+            }
+            public void run(){
+                try { 
+                
+                    while (!Thread.currentThread().isInterrupted()){
+                            this.kropelka.ruszKropelka(ten);
+                            repaint();
+                             Thread.sleep(1);
+
+                    }
+                 } 
+                 catch (InterruptedException ex) {
+                     System.out.println(ex.getMessage());
+                     listaKropelek.clear();
+                     repaint();
+                 }
+            }
+            Kropelka kropelka;
         }
     }
 }
@@ -92,7 +110,7 @@ class Kropelka{
             x = (int)(granicePanelu.getMaxX()-xKropelki);
             dx = -dx;
         }
-        if (y < granicePanelu.getMinY()){
+        if (y < granicePanelu.getMinY()) {
             y = (int)granicePanelu.getMinY();
             dy = -dy;
         }
@@ -100,14 +118,19 @@ class Kropelka{
         if (x < granicePanelu.getMinX()){
             x = (int)granicePanelu.getMinX();
             dx = -dx;
-        }            
+        }        
+            
+        
+        
+        
+        
     }
-    public static Image kropelka = new ImageIcon("kropelka.png").getImage().getScaledInstance(100, 60, 0);
+    public static Image kropelka = new ImageIcon("kropelka.png").getImage().getScaledInstance(100, 100, 0);
     
     int x = 0;
     int y = 0;
     int dx = 1;
     int dy = 1;
-    int xKropelki = kropelka.getWidth(null);
-    int yKropelki = kropelka.getHeight(null);
+    int xKropelki = 80;//kropelka.getWidth(null);
+    int yKropelki = 80;//kropelka.getHeight(null);
 }
